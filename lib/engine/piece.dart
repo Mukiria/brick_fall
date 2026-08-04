@@ -11,6 +11,8 @@ class Piece {
   final int rotation; // 0, 1, 2, 3 (90 degree increments)
   final int color;
   final int id;
+  final List<Offset>? customBlocks; // For custom pieces from library
+  final String? libraryId; // Reference to PieceLibrary definition
 
   static int _nextId = 0;
 
@@ -21,9 +23,11 @@ class Piece {
     this.rotation = 0,
     required this.color,
     int? id,
+    this.customBlocks,
+    this.libraryId,
   }) : id = id ?? _nextId++;
 
-  /// Create piece at spawn position
+  /// Create standard piece at spawn position
   factory Piece.spawn(PieceType type) {
     final definition = GameConstants.pieceDefinitions[type]!;
     final blocks = definition.map((o) => Offset(o.dx, o.dy)).toList();
@@ -43,8 +47,30 @@ class Piece {
     );
   }
 
+  /// Create custom piece from library definition
+  factory Piece.fromLibrary(String libraryId, List<Offset> blocks, int color, {int x = 0, int y = 0}) {
+    return Piece(
+      type: PieceType.O, // Use O as base for custom pieces
+      x: x,
+      y: y,
+      color: color,
+      customBlocks: blocks,
+      libraryId: libraryId,
+    );
+  }
+
   /// Get block positions relative to piece origin
   List<Offset> get blocks {
+    if (customBlocks != null) {
+      var blocks = List<Offset>.from(customBlocks!);
+      
+      // Apply rotation
+      for (int i = 0; i < rotation; i++) {
+        blocks = blocks.map((b) => Offset(-b.dy, b.dx)).toList();
+      }
+      return blocks;
+    }
+    
     final definition = GameConstants.pieceDefinitions[type]!;
     var blocks = definition.map((o) => Offset(o.dx, o.dy)).toList();
     
@@ -94,6 +120,8 @@ class Piece {
           rotation: rotation,
           color: color,
           id: id,
+          customBlocks: customBlocks,
+          libraryId: libraryId,
         );
       case MoveDirection.right:
         return Piece(
@@ -103,6 +131,8 @@ class Piece {
           rotation: rotation,
           color: color,
           id: id,
+          customBlocks: customBlocks,
+          libraryId: libraryId,
         );
       case MoveDirection.down:
         return Piece(
@@ -112,6 +142,8 @@ class Piece {
           rotation: rotation,
           color: color,
           id: id,
+          customBlocks: customBlocks,
+          libraryId: libraryId,
         );
       case MoveDirection.drop:
         return Piece(
@@ -121,6 +153,8 @@ class Piece {
           rotation: rotation,
           color: color,
           id: id,
+          customBlocks: customBlocks,
+          libraryId: libraryId,
         );
     }
   }
@@ -134,6 +168,8 @@ class Piece {
       rotation: rotation,
       color: color,
       id: id,
+      customBlocks: customBlocks,
+      libraryId: libraryId,
     );
   }
 
@@ -146,6 +182,8 @@ class Piece {
       rotation: (rotation + 1) % 4,
       color: color,
       id: id,
+      customBlocks: customBlocks,
+      libraryId: libraryId,
     );
   }
 
@@ -158,14 +196,19 @@ class Piece {
       rotation: (rotation + 3) % 4,
       color: color,
       id: id,
+      customBlocks: customBlocks,
+      libraryId: libraryId,
     );
   }
 
   /// Check if piece is O type (square, no rotation change)
-  bool get isSquare => type == PieceType.O;
+  bool get isSquare => type == PieceType.O && customBlocks == null;
 
   /// Check if piece is I type (needs special wall kicks)
-  bool get isI => type == PieceType.I;
+  bool get isI => type == PieceType.I && customBlocks == null;
+
+  /// Check if this is a custom library piece
+  bool get isCustom => customBlocks != null;
 
   @override
   bool operator ==(Object other) =>
@@ -177,14 +220,17 @@ class Piece {
           y == other.y &&
           rotation == other.rotation &&
           color == other.color &&
-          id == other.id;
+          id == other.id &&
+          customBlocks == other.customBlocks &&
+          libraryId == other.libraryId;
 
   @override
   int get hashCode =>
-      type.hashCode ^ x.hashCode ^ y.hashCode ^ rotation.hashCode ^ color.hashCode ^ id.hashCode;
+      type.hashCode ^ x.hashCode ^ y.hashCode ^ rotation.hashCode ^ color.hashCode ^ id.hashCode ^ 
+      customBlocks.hashCode ^ libraryId.hashCode;
 
   @override
-  String toString() => 'Piece(type: $type, x: $x, y: $y, rot: $rotation, id: $id)';
+  String toString() => 'Piece(type: $type, x: $x, y: $y, rot: $rotation, id: $id, custom: $isCustom)';
 
   /// Serialize to JSON
   Map<String, dynamic> toJson() => {
@@ -194,6 +240,8 @@ class Piece {
         'rotation': rotation,
         'color': color,
         'id': id,
+        'customBlocks': customBlocks?.map((b) => {'dx': b.dx, 'dy': b.dy}).toList(),
+        'libraryId': libraryId,
       };
 
   /// Deserialize from JSON
@@ -204,5 +252,7 @@ class Piece {
         rotation: json['rotation'] as int,
         color: json['color'] as int,
         id: json['id'] as int,
+        customBlocks: (json['customBlocks'] as List?)?.map((b) => Offset(b['dx'] as int, b['dy'] as int)).toList(),
+        libraryId: json['libraryId'] as String?,
       );
 }
