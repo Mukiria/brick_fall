@@ -6,6 +6,7 @@ export 'constants.dart';
 export 'board.dart';
 export 'piece.dart';
 export 'piece_library.dart';
+export 'procedural_generator.dart';
 export 'piece_generator.dart';
 export 'placement_validator.dart';
 export 'score_engine.dart';

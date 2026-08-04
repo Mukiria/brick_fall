@@ -3,6 +3,7 @@
 
 import 'constants.dart';
 import 'types.dart';
+import 'piece_library.dart';
 
 class Piece {
   final PieceType type;
@@ -26,6 +27,39 @@ class Piece {
     this.customBlocks,
     this.libraryId,
   }) : id = id ?? _nextId++;
+
+  /// Get the category from library definition (for custom pieces)
+  PieceCategory? get category {
+    if (libraryId != null) {
+      final library = PieceLibrary();
+      final def = library.get(libraryId!);
+      return def?.category;
+    }
+    // Map standard PieceType to category
+    return _typeToCategory(type);
+  }
+
+  /// Get the difficulty from library definition (for custom pieces)
+  int get difficulty {
+    if (libraryId != null) {
+      final library = PieceLibrary();
+      final def = library.get(libraryId!);
+      return def?.difficulty ?? 1;
+    }
+    return 1;
+  }
+
+  PieceCategory? _typeToCategory(PieceType type) {
+    switch (type) {
+      case PieceType.I: return PieceCategory.long;
+      case PieceType.J: return PieceCategory.lShape;
+      case PieceType.L: return PieceCategory.lShape;
+      case PieceType.O: return PieceCategory.square;
+      case PieceType.S: return PieceCategory.zShape;
+      case PieceType.T: return PieceCategory.tShape;
+      case PieceType.Z: return PieceCategory.zShape;
+    }
+  }
 
   /// Create standard piece at spawn position
   factory Piece.spawn(PieceType type) {
