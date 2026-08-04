@@ -8,3 +8,4 @@ export 'game_over_stat_row.dart';
 export 'control_button.dart';
 export 'menu_button.dart';
 export 'board.dart';
+export 'draggable_piece.dart';

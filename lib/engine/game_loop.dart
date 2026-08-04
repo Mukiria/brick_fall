@@ -197,6 +197,11 @@ class GameLoop extends ChangeNotifier {
   /// Get difficulty
   engine_types.Difficulty get difficulty => _engine.difficulty;
 
+  /// Move piece to absolute position (for drag-and-drop)
+  void moveToPosition(int x, int y) {
+    _engine.moveToPosition(x, y);
+  }
+
   /// Serialize for save
   Map<String, dynamic> toJson() => _engine.toJson();
 

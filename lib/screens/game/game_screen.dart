@@ -348,13 +348,17 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     final piece = gameState.currentPiece;
     if (piece == null) return const SizedBox.shrink();
     
-    return Positioned.fill(
-      child: CustomPaint(
-        painter: _PiecePainter(
-          piece: piece,
-          blockSize: blockSize,
-        ),
-      ),
+    return DraggablePiece(
+      key: ValueKey(piece.id),
+      piece: piece,
+      blockSize: blockSize.toInt(),
+      board: gameState.board,
+      gameState: gameState,
+      enabled: gameState.status == engine.GameStateStatus.playing,
+      onPositionChanged: (x, y) {
+        // Update piece position in game loop
+        ref.read(gameLoopProvider).moveToPosition(x, y);
+      },
     );
   }
 

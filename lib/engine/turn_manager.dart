@@ -218,6 +218,25 @@ class TurnManager {
     manager._isPieceLocked = json['isPieceLocked'] as bool;
     return manager;
   }
+
+  /// Move piece to absolute position (for drag-and-drop)
+  MoveResult moveToPosition(Board board, int x, int y) {
+    if (_currentPiece == null || _isPieceLocked) {
+      return MoveResult.failure('No active piece');
+    }
+
+    final moved = _currentPiece!.moveBy(x - _currentPiece!.x, y - _currentPiece!.y);
+    final result = _validator.canPlace(board, moved);
+    
+    if (result == PlacementResult.success) {
+      _currentPiece = moved;
+      _moveCount++;
+      _lockDelayRemaining = 500; // Reset lock delay
+      return MoveResult.success(_currentPiece!);
+    }
+    
+    return MoveResult.failure(result.name);
+  }
 }
 
 /// Result of move attempt

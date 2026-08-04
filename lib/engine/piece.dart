@@ -4,6 +4,7 @@
 import 'constants.dart';
 import 'types.dart';
 import 'piece_library.dart';
+import 'board.dart';
 
 class Piece {
   final PieceType type;
@@ -205,6 +206,37 @@ class Piece {
       customBlocks: customBlocks,
       libraryId: libraryId,
     );
+  }
+
+  /// Hard drop - move down until collision
+  Piece hardDrop(Board board) {
+    int dropY = y;
+    while (!_collidesWithBoard(board, x, dropY + 1)) {
+      dropY++;
+    }
+    return Piece(
+      type: type,
+      x: x,
+      y: dropY,
+      rotation: rotation,
+      color: color,
+      id: id,
+      customBlocks: customBlocks,
+      libraryId: libraryId,
+    );
+  }
+
+  /// Check if piece collides with board at given position
+  bool _collidesWithBoard(Board board, int testX, int testY) {
+    for (final block in blocks) {
+      final x = testX + block.dx;
+      final y = testY + block.dy;
+      
+      if (x < 0 || x >= board.width) return true;
+      if (y >= board.height) return true;
+      if (y >= 0 && board.isOccupied(x, y)) return true;
+    }
+    return false;
   }
 
   /// Rotate clockwise

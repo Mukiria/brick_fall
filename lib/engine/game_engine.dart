@@ -215,6 +215,11 @@ class GameEngine {
   /// Get difficulty
   Difficulty get difficulty => _state.difficulty;
 
+  /// Move piece to absolute position (for drag-and-drop)
+  MoveResult moveToPosition(int x, int y) {
+    return _turnManager.moveToPosition(_board, x, y);
+  }
+
   // Private methods
 
   void _resetGame({required Difficulty difficulty}) {
