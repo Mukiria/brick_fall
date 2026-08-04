@@ -4,7 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/themes/app_theme.dart';
+import '../../core/constants/game_constants.dart';
+import '../../core/design/colors.dart';
+import '../../core/design/spacing.dart';
 import '../../core/extensions/extensions.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
@@ -535,10 +537,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   Widget _buildPauseOverlay(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return FadeTransition(
       opacity: _pauseController,
       child: Container(
-        color: AppColors.pauseOverlay,
+        color: isDark ? AppColors.pauseOverlayDark : AppColors.pauseOverlayLight,
         child: Center(
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.8, end: 1.0).animate(
@@ -588,6 +591,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   Widget _buildGameOverOverlay(ThemeData theme, GameState gameState) {
     if (gameState.state != CoreGameState.gameOver) return const SizedBox.shrink();
+    final isDark = theme.brightness == Brightness.dark;
     
     return AnimatedBuilder(
       animation: _gameOverController,
@@ -599,7 +603,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               CurvedAnimation(parent: _gameOverController, curve: Curves.elasticOut),
             ),
             child: Container(
-              color: AppColors.gameOverOverlay,
+              color: isDark ? AppColors.gameOverOverlayDark : AppColors.gameOverOverlayLight,
               child: Center(
                 child: Container(
                   margin: EdgeInsets.all(32.w),

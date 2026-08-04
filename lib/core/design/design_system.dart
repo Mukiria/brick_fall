@@ -1,0 +1,91 @@
+// lib/core/design/design_system.dart
+/// Design System Export Barrel
+/// 
+/// Import this file to access all design system components:
+/// ```dart
+/// import 'core/design/design_system.dart';
+/// ```
+
+export 'colors.dart';
+export 'typography.dart';
+export 'spacing.dart';
+export 'gradients.dart';
+export 'animations.dart';
+
+// Re-export commonly used Flutter classes for convenience
+export 'package:flutter/material.dart' show
+    Color,
+    TextStyle,
+    FontWeight,
+    Alignment,
+    BorderRadius,
+    Radius,
+    EdgeInsets,
+    Duration,
+    Curve,
+    Cubic,
+    Brightness,
+    ThemeData,
+    ColorScheme,
+    TextTheme,
+    CardThemeData,
+    ElevatedButtonThemeData,
+    FilledButtonThemeData,
+    OutlinedButtonThemeData,
+    TextButtonThemeData,
+    InputDecorationTheme,
+    SliderThemeData,
+    SwitchThemeData,
+    CheckboxThemeData,
+    RadioThemeData,
+    ProgressIndicatorThemeData,
+    DividerThemeData,
+    ChipThemeData,
+    DialogThemeData,
+    BottomSheetThemeData,
+    NavigationBarThemeData,
+    TabBarThemeData,
+    AppBarTheme,
+    FloatingActionButtonThemeData,
+    PopupMenuThemeData,
+    TooltipThemeData,
+    SnackBarThemeData,
+    PageTransitionsTheme,
+    TargetPlatform,
+    ZoomPageTransitionsBuilder,
+    CupertinoPageTransitionsBuilder,
+    SystemUiOverlayStyle,
+    WidgetStateProperty,
+    WidgetState,
+    MaterialTapTargetSize,
+    VisualDensity,
+    RoundedRectangleBorder,
+    BorderSide,
+    Border,
+    BoxDecoration,
+    BoxBorder,
+    CircleBorder,
+    NoSplash,
+    InkRipple,
+    TextBaseline,
+    TextScaler,
+    MediaQuery,
+    Size,
+    Offset,
+    AlignmentGeometry,
+    LinearGradient,
+    RadialGradient,
+    SweepGradient,
+    Gradient,
+    Matrix4,
+    Transform,
+    AnimatedBuilder,
+    AnimationController,
+    Tween,
+    CurvedAnimation,
+    Curves,
+    IconThemeData,
+    Icon,
+    Icons,
+    Semantics,
+    TextDirection;

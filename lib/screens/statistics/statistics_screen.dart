@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/themes/app_theme.dart';
+import '../../core/constants/game_constants.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../widgets/widgets.dart';
@@ -199,7 +199,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> with Single
             brickType: brick,
             count: count,
             percentage: percentage,
-            color: AppColors.brickColors[brick.index],
+            color: GameConstants.tetrominoColors[brick.index],
           ).animate().fadeIn(duration: 600.ms, delay: (brick.index * 100).ms).slideX(begin: -0.3);
         }).toList(),
       ),
