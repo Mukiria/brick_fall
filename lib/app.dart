@@ -76,6 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/statistics',
         builder: (context, state) => const StatisticsScreen(),
       ),
+      GoRoute(
+        path: '/achievements',
+        builder: (context, state) => const AchievementsScreen(),
+      ),
     ],
     redirect: (context, state) {
       return null;
