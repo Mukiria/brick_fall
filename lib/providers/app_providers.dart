@@ -1,21 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/material.dart';
-import '../models/models.dart';
-import '../engine/engine.dart';
+import '../models/models.dart' as models;
+import '../engine/engine.dart' as engine;
 import '../storage/storage_service.dart';
 import '../audio/audio_service.dart';
 
 part 'app_providers.g.dart';
 
 @riverpod
-GameLoop gameLoop(Ref ref) {
-  return GameLoop();
+engine.GameLoop gameLoop(Ref ref) {
+  return engine.GameLoop();
 }
 
 @riverpod
-GameEngine gameEngine(Ref ref) {
-  return GameEngine();
+engine.GameEngine gameEngine(Ref ref) {
+  return engine.GameEngine();
 }
 
 @riverpod
@@ -29,13 +29,13 @@ StorageService storageService(Ref ref) {
 }
 
 @riverpod
-Future<Settings> settings(Ref ref) async {
+Future<models.Settings> settings(Ref ref) async {
   final storage = ref.watch(storageServiceProvider);
   return storage.getSettings();
 }
 
 @riverpod
-Future<Statistics> statistics(Ref ref) async {
+Future<models.Statistics> statistics(Ref ref) async {
   final storage = ref.watch(storageServiceProvider);
   return storage.getStatistics();
 }
@@ -43,16 +43,16 @@ Future<Statistics> statistics(Ref ref) async {
 @riverpod
 class GameStateNotifier extends _$GameStateNotifier {
   @override
-  GameState build() {
-    return GameState.initial();
+  engine.GameState build() {
+    return engine.GameState.initial();
   }
 
-  void updateState(GameState state) {
+  void updateState(engine.GameState state) {
     this.state = state;
   }
 
   void reset() {
-    state = GameState.initial(
+    state = engine.GameState.initial(
       difficulty: state.difficulty,
       highScore: state.highScore,
     );
@@ -62,12 +62,12 @@ class GameStateNotifier extends _$GameStateNotifier {
 @riverpod
 class SettingsNotifier extends _$SettingsNotifier {
   @override
-  Future<Settings> build() async {
+  Future<models.Settings> build() async {
     final storage = ref.watch(storageServiceProvider);
     return storage.getSettings();
   }
 
-  Future<void> updateSettings(Settings settings) async {
+  Future<void> updateSettings(models.Settings settings) async {
     state = AsyncValue.data(settings);
     final storage = ref.watch(storageServiceProvider);
     await storage.saveSettings(settings);
@@ -75,40 +75,41 @@ class SettingsNotifier extends _$SettingsNotifier {
   }
 
   Future<void> toggleSound() async {
-    final current = state.value ?? Settings.defaultSettings();
+    final current = state.value ?? models.Settings.defaultSettings();
     await updateSettings(current.copyWith(soundEnabled: !current.soundEnabled));
   }
 
   Future<void> toggleMusic() async {
-    final current = state.value ?? Settings.defaultSettings();
+    final current = state.value ?? models.Settings.defaultSettings();
     await updateSettings(current.copyWith(musicEnabled: !current.musicEnabled));
   }
 
   Future<void> setSoundVolume(double volume) async {
-    final current = state.value ?? Settings.defaultSettings();
+    final current = state.value ?? models.Settings.defaultSettings();
     await updateSettings(current.copyWith(soundVolume: volume.clamp(0.0, 1.0)));
   }
 
   Future<void> setMusicVolume(double volume) async {
-    final current = state.value ?? Settings.defaultSettings();
+    final current = state.value ?? models.Settings.defaultSettings();
     await updateSettings(current.copyWith(musicVolume: volume.clamp(0.0, 1.0)));
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    final current = state.value ?? Settings.defaultSettings();
+    final current = state.value ?? models.Settings.defaultSettings();
     await updateSettings(current.copyWith(themeModeIndex: mode.index));
   }
 
-  Future<void> setDifficulty(Difficulty difficulty) async {
-    final current = state.value ?? Settings.defaultSettings();
-    await updateSettings(current.copyWith(defaultDifficulty: difficulty));
+  Future<void> setDifficulty(engine.Difficulty difficulty) async {
+    final current = state.value ?? models.Settings.defaultSettings();
+    final modelDifficulty = models.Difficulty.values.firstWhere((d) => d.name == difficulty.name);
+    await updateSettings(current.copyWith(defaultDifficulty: modelDifficulty));
   }
 }
 
 @riverpod
 class StatisticsNotifier extends _$StatisticsNotifier {
   @override
-  Future<Statistics> build() async {
+  Future<models.Statistics> build() async {
     final storage = ref.watch(storageServiceProvider);
     return storage.getStatistics();
   }
@@ -118,17 +119,24 @@ class StatisticsNotifier extends _$StatisticsNotifier {
     required int linesCleared,
     required int levelReached,
     required Duration playTime,
-    required Difficulty difficulty,
-    required Map<BrickType, int> brickUsage,
+    required engine.Difficulty difficulty,
+    required Map<engine.PieceType, int> brickUsage,
   }) async {
-    final current = state.value ?? Statistics.initial();
+    final current = state.value ?? models.Statistics.initial();
+    
+    // Convert engine types to model types
+    final modelDifficulty = models.Difficulty.values.firstWhere((d) => d.name == difficulty.name);
+    final modelBrickUsage = brickUsage.map(
+      (k, v) => MapEntry(models.BrickType.values.firstWhere((b) => b.name == k.name), v),
+    );
+    
     final updated = current.addGame(
       score: score,
       linesCleared: linesCleared,
       levelReached: levelReached,
       playTime: playTime,
-      difficulty: difficulty,
-      brickUsage: brickUsage,
+      difficulty: modelDifficulty,
+      brickUsage: modelBrickUsage,
     );
     state = AsyncValue.data(updated);
     final storage = ref.watch(storageServiceProvider);
@@ -136,8 +144,8 @@ class StatisticsNotifier extends _$StatisticsNotifier {
   }
 
   Future<void> reset() async {
-    state = AsyncValue.data(Statistics.initial());
+    state = AsyncValue.data(models.Statistics.initial());
     final storage = ref.watch(storageServiceProvider);
-    await storage.saveStatistics(Statistics.initial());
+    await storage.saveStatistics(models.Statistics.initial());
   }
 }

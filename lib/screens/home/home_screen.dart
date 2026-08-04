@@ -5,7 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
 import '../../core/design/design_system.dart';
-import '../../models/models.dart';
+import '../../engine/engine.dart' as engine;
+import '../../models/models.dart' as models;
 import '../../providers/providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -78,8 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final theme = Theme.of(context);
     final statisticsAsync = ref.watch(statisticsProvider);
     final gameLoop = ref.watch(gameLoopProvider);
-    final hasSavedGame = gameLoop.currentState.state != CoreGameState.idle && 
-                         gameLoop.currentState.state != CoreGameState.gameOver;
+    final hasSavedGame = gameLoop.currentState.status != engine.GameStateStatus.idle && 
+                         gameLoop.currentState.status != engine.GameStateStatus.gameOver;
     final isWide = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
@@ -393,7 +394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       if (mounted) setState(() => _showThemeSelector = false);
     });
     
-    final settings = ref.read(settingsProvider).value ?? Settings.defaultSettings();
+    final settings = ref.read(settingsProvider).value ?? models.Settings.defaultSettings();
     ref.read(settingsNotifierProvider.notifier).updateSettings(
       settings.copyWith(themeModeIndex: mode.index),
     );
@@ -556,7 +557,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildStatsPreview(ThemeData theme, AsyncValue<Statistics> statisticsAsync, bool isWide) {
+  Widget _buildStatsPreview(ThemeData theme, AsyncValue<models.Statistics> statisticsAsync, bool isWide) {
     return statisticsAsync.when(
       data: (stats) => _StatsPreviewCard(stats: stats, isWide: isWide),
       loading: () => _StatsPreviewSkeleton(isWide: isWide),
@@ -813,7 +814,7 @@ class _AnimatedActionButtonState extends State<_AnimatedActionButton>
 }
 
 class _StatsPreviewCard extends StatelessWidget {
-  final Statistics stats;
+  final models.Statistics stats;
   final bool isWide;
 
   const _StatsPreviewCard({
@@ -903,7 +904,7 @@ class _StatsPreviewCard extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildStatItems(ThemeData theme, Statistics stats) {
+  List<Widget> _buildStatItems(ThemeData theme, models.Statistics stats) {
     final statItems = [
       _StatItemConfig(
         label: 'Games Played',
@@ -1283,7 +1284,7 @@ class _ThemeOptionTile extends StatelessWidget {
 }
 
 class _DifficultyDialog extends ConsumerStatefulWidget {
-  final Function(Difficulty) onSelect;
+  final Function(engine.Difficulty) onSelect;
 
   const _DifficultyDialog({required this.onSelect});
 
@@ -1294,7 +1295,7 @@ class _DifficultyDialog extends ConsumerStatefulWidget {
 class _DifficultyDialogState extends ConsumerState<_DifficultyDialog> 
     with TickerProviderStateMixin {
   late final AnimationController _controller;
-  Difficulty _selectedDifficulty = Difficulty.normal;
+  engine.Difficulty _selectedDifficulty = engine.Difficulty.normal;
 
   @override
   void initState() {
@@ -1306,7 +1307,7 @@ class _DifficultyDialogState extends ConsumerState<_DifficultyDialog>
     
     final settings = ref.read(settingsProvider).value;
     if (settings != null) {
-      _selectedDifficulty = settings.defaultDifficulty;
+      _selectedDifficulty = engine.Difficulty.values.firstWhere((d) => d.name == settings.defaultDifficulty.name);
     }
   }
 
@@ -1366,7 +1367,7 @@ class _DifficultyDialogState extends ConsumerState<_DifficultyDialog>
                         ),
                       ),
                       SizedBox(height: 24.h),
-                      ...Difficulty.values.map((difficulty) => 
+                      ...engine.Difficulty.values.map((difficulty) => 
                         _DifficultyTile(
                           difficulty: difficulty,
                           isSelected: difficulty == _selectedDifficulty,
@@ -1419,7 +1420,7 @@ class _DifficultyDialogState extends ConsumerState<_DifficultyDialog>
 }
 
 class _DifficultyTile extends StatelessWidget {
-  final Difficulty difficulty;
+  final engine.Difficulty difficulty;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -1513,9 +1514,9 @@ class _DifficultyTile extends StatelessWidget {
     );
   }
 
-  _DifficultyConfig _getDifficultyConfig(Difficulty difficulty) {
+  _DifficultyConfig _getDifficultyConfig(engine.Difficulty difficulty) {
     switch (difficulty) {
-      case Difficulty.easy:
+      case engine.Difficulty.easy:
         return _DifficultyConfig(
           color: Colors.green,
           gradient: LinearGradient(
@@ -1524,7 +1525,7 @@ class _DifficultyTile extends StatelessWidget {
           icon: Icons.sentiment_very_satisfied_rounded,
           description: 'Relaxed pace, perfect for learning',
         );
-      case Difficulty.normal:
+      case engine.Difficulty.normal:
         return _DifficultyConfig(
           color: Colors.orange,
           gradient: LinearGradient(
@@ -1533,7 +1534,7 @@ class _DifficultyTile extends StatelessWidget {
           icon: Icons.sentiment_satisfied_rounded,
           description: 'Classic Tetris experience',
         );
-      case Difficulty.hard:
+      case engine.Difficulty.hard:
         return _DifficultyConfig(
           color: Colors.red,
           gradient: LinearGradient(
@@ -1542,7 +1543,7 @@ class _DifficultyTile extends StatelessWidget {
           icon: Icons.sentiment_very_dissatisfied_rounded,
           description: 'Fast drops, high intensity',
         );
-      case Difficulty.expert:
+      case engine.Difficulty.expert:
         return _DifficultyConfig(
           color: Colors.purple,
           gradient: LinearGradient(

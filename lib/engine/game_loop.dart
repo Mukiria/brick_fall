@@ -1,13 +1,19 @@
-import 'dart:async';
-import '../models/models.dart';
-import '../core/constants/app_constants.dart';
-import 'game_engine.dart';
+// lib/engine/game_loop.dart
+/// GameLoop - Bridges GameEngine with Flutter streams
 
-class GameLoop {
-  final GameEngine _engine = GameEngine();
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'game_engine.dart';
+import 'types.dart' as engine_types;
+import 'game_state.dart';
+import 'piece.dart';
+import 'board.dart';
+
+class GameLoop extends ChangeNotifier {
+  final GameEngine _engine;
   Timer? _timer;
   Duration _accumulatedTime = Duration.zero;
-  Duration _lastUpdate = Duration.zero;
+  DateTime? _lastFrameTime;
   bool _isRunning = false;
 
   final StreamController<GameState> _stateController = StreamController<GameState>.broadcast();
@@ -22,28 +28,77 @@ class GameLoop {
   final StreamController<void> _gameOverController = StreamController<void>.broadcast();
   Stream<void> get gameOverStream => _gameOverController.stream;
 
-  GameState _currentState = GameState.initial();
+  final StreamController<int> _levelUpController = StreamController<int>.broadcast();
+  Stream<int> get levelUpStream => _levelUpController.stream;
+
+  final StreamController<bool> _tSpinController = StreamController<bool>.broadcast();
+  Stream<bool> get tSpinStream => _tSpinController.stream;
+
+  GameState _currentState;
 
   GameState get currentState => _currentState;
 
-  void start({Difficulty? difficulty}) {
+  GameLoop({
+    engine_types.Difficulty difficulty = engine_types.Difficulty.normal,
+    int highScore = 0,
+  })  : _engine = GameEngine(
+          difficulty: difficulty,
+          highScore: highScore,
+        ),
+        _currentState = GameState.initial(
+          difficulty: difficulty,
+          highScore: highScore,
+        ) {
+    _setupCallbacks();
+  }
+
+  void _setupCallbacks() {
+    _engine.setOnStateChange(_onStateChange);
+    _engine.setOnLinesCleared(_onLinesCleared);
+    _engine.setOnScoreChange(_onScoreChange);
+    _engine.setOnGameOver(_onGameOver);
+    _engine.setOnLevelUp(_onLevelUp);
+    _engine.setOnTSpin(_onTSpin);
+  }
+
+  void _onStateChange(GameState state) {
+    _currentState = state;
+    _stateController.add(state);
+    notifyListeners();
+  }
+
+  void _onLinesCleared(List<int> lines) {
+    _lineClearController.add(lines);
+  }
+
+  void _onScoreChange(int score) {
+    _scoreController.add(score);
+  }
+
+  void _onGameOver() {
+    _isRunning = false;
+    _timer?.cancel();
+    _gameOverController.add(null);
+  }
+
+  void _onLevelUp(int level) {
+    _levelUpController.add(level);
+  }
+
+  void _onTSpin(bool isTSpin) {
+    _tSpinController.add(isTSpin);
+  }
+
+  /// Start new game
+  void start({engine_types.Difficulty? difficulty}) {
     if (_isRunning) return;
     
-    _engine.resetBag();
-    _currentState = GameState.initial(
-      difficulty: difficulty ?? _currentState.difficulty,
-      highScore: _currentState.highScore,
-    );
-    
-    _spawnNewBrick();
-    _currentState = _currentState.copyWith(
-      state: CoreGameState.playing,
-      startTime: DateTime.now(),
-    );
-    _stateController.add(_currentState);
+    _engine.start(difficulty: difficulty);
+    _currentState = _engine.state;
     
     _isRunning = true;
-    _lastUpdate = Duration.zero;
+    _lastFrameTime = DateTime.now();
+    _accumulatedTime = Duration.zero;
     _runLoop();
   }
 
@@ -57,210 +112,95 @@ class GameLoop {
       return;
     }
 
-    final now = DateTime.now();
-    final delta = now.difference(DateTime.now().subtract(_lastUpdate));
-    _lastUpdate = now.difference(DateTime.now().subtract(_lastUpdate));
+    if (_currentState.status != engine_types.GameStateStatus.playing) return;
 
-    if (_currentState.state != CoreGameState.playing) return;
+    final now = DateTime.now();
+    final delta = now.difference(_lastFrameTime!);
+    _lastFrameTime = now;
 
     _accumulatedTime += delta;
-    final tickRate = _engine.getTickRate(_currentState.level, _currentState.difficulty);
+    final tickRate = _engine.getTickRate();
 
     if (_accumulatedTime >= tickRate) {
       _accumulatedTime = Duration.zero;
-      _tick();
-    }
-
-    _currentState = _currentState.copyWith(
-      elapsedTime: _currentState.elapsedTime + delta,
-    );
-    _stateController.add(_currentState);
-  }
-
-  void _tick() {
-    if (_currentState.currentBrick == null) {
-      _spawnNewBrick();
-      return;
-    }
-
-    final movedBrick = _currentState.currentBrick!.move(Direction.down);
-    
-    if (_engine.checkCollision(movedBrick, _currentState.grid)) {
-      _lockBrick();
+      _engine.tick();
     } else {
-      _currentState = _currentState.copyWith(currentBrick: movedBrick);
-      _stateController.add(_currentState);
+      // Still update elapsed time for smooth UI
+      _engine.tick();
     }
   }
 
-  void _spawnNewBrick() {
-    final nextType = _currentState.nextBrick?.type ?? _engine.getNextType();
-    final newNextType = _engine.getNextType();
-    
-    final newBrick = _engine.createBrick(nextType);
-    final nextBrick = _engine.createBrick(newNextType);
-
-    if (_engine.isGameOver(_currentState.grid, newBrick)) {
-      _gameOver();
-      return;
-    }
-
-    _currentState = _currentState.copyWith(
-      currentBrick: newBrick,
-      nextBrick: nextBrick,
-      canHold: true,
-    );
-  }
-
-  void _lockBrick() {
-    if (_currentState.currentBrick == null) return;
-
-    final grid = List<List<bool>>.from(_currentState.grid.map((row) => List<bool>.from(row)));
-    final gridColors = List<List<int>>.from(_currentState.gridColors.map((row) => List<int>.from(row)));
-    
-    final brick = _currentState.currentBrick!;
-    for (final block in brick.blocks) {
-      if (block.y >= 0 && block.y < AppConstants.gameHeight && block.x >= 0 && block.x < AppConstants.gameWidth) {
-        grid[block.y][block.x] = true;
-        gridColors[block.y][block.x] = brick.color.value;
-      }
-    }
-
-    final clearedLines = _engine.checkLines(grid);
-    var newScore = _currentState.score;
-    var newCombo = _currentState.combo;
-    var newLinesCleared = _currentState.linesCleared;
-    var newTotalLinesCleared = _currentState.totalLinesCleared;
-
-    if (clearedLines.isNotEmpty) {
-      _engine.clearLines(grid, gridColors, clearedLines);
-      newLinesCleared = clearedLines.length;
-      newTotalLinesCleared = _currentState.totalLinesCleared + clearedLines.length;
-      newScore += _currentState.calculateScore(clearedLines.length);
-      newCombo = _currentState.combo + 1;
-      _lineClearController.add(clearedLines);
-      _scoreController.add(newScore);
-    } else {
-      newCombo = 0;
-    }
-
-    final newLevel = _engine.calculateLevel(newTotalLinesCleared);
-
-    _currentState = _currentState.copyWith(
-      grid: grid,
-      gridColors: gridColors,
-      currentBrick: null,
-      score: newScore,
-      linesCleared: newLinesCleared,
-      totalLinesCleared: newTotalLinesCleared,
-      combo: newCombo,
-      level: newLevel,
-      highScore: newScore > _currentState.highScore ? newScore : _currentState.highScore,
-    );
-
-    _spawnNewBrick();
-    _stateController.add(_currentState);
-  }
-
-  void _gameOver() {
-    _isRunning = false;
-    _timer?.cancel();
-    _currentState = _currentState.copyWith(state: CoreGameState.gameOver);
-    _stateController.add(_currentState);
-    _gameOverController.add(null);
-  }
+  /// Game controls
+  void moveLeft() => _engine.moveLeft();
+  void moveRight() => _engine.moveRight();
+  void moveDown() => _engine.moveDown();
+  void hardDrop() => _engine.hardDrop();
+  void rotateClockwise() => _engine.rotateClockwise();
+  void rotateCounterClockwise() => _engine.rotateCounterClockwise();
+  void hold() => _engine.hold();
 
   void pause() {
-    if (_currentState.state == CoreGameState.playing) {
+    if (_currentState.status == engine_types.GameStateStatus.playing) {
       _isRunning = false;
-      _currentState = _currentState.copyWith(state: CoreGameState.paused);
-      _stateController.add(_currentState);
+      _engine.pause();
     }
   }
 
   void resume() {
-    if (_currentState.state == CoreGameState.paused) {
+    if (_currentState.status == engine_types.GameStateStatus.paused) {
       _isRunning = true;
-      _lastUpdate = Duration.zero;
-      _currentState = _currentState.copyWith(state: CoreGameState.playing);
-      _stateController.add(_currentState);
+      _lastFrameTime = DateTime.now();
+      _engine.resume();
     }
   }
 
-  void moveLeft() {
-    _move(Direction.left);
+  /// Get ghost piece position
+  List<engine_types.Offset> getGhostPosition() {
+    final ghost = _engine.getGhostPiece();
+    if (ghost == null) return [];
+    return ghost.absoluteBlocks;
   }
 
-  void moveRight() {
-    _move(Direction.right);
-  }
+  /// Get current piece
+  Piece? get currentPiece => _engine.currentPiece;
 
-  void moveDown() {
-    _move(Direction.down);
-  }
+  /// Get next piece
+  Piece? get nextPiece => _engine.nextPiece;
 
-  void rotate() {
-    if (_currentState.currentBrick == null) return;
-    
-    final rotated = _engine.tryRotate(_currentState.currentBrick!, _currentState.grid, true);
-    if (rotated != _currentState.currentBrick) {
-      _currentState = _currentState.copyWith(currentBrick: rotated);
-      _stateController.add(_currentState);
-    }
-  }
+  /// Get held piece
+  Piece? get heldPiece => _engine.heldPiece;
 
-  void rotateCounterClockwise() {
-    if (_currentState.currentBrick == null) return;
-    
-    final rotated = _engine.tryRotate(_currentState.currentBrick!, _currentState.grid, false);
-    if (rotated != _currentState.currentBrick) {
-      _currentState = _currentState.copyWith(currentBrick: rotated);
-      _stateController.add(_currentState);
-    }
-  }
+  /// Get score
+  int get score => _engine.score;
 
-  void hardDrop() {
-    if (_currentState.currentBrick == null) return;
-    
-    final ghostBrick = _currentState.currentBrick!.hardDrop(_currentState.grid);
-    _currentState = _currentState.copyWith(currentBrick: ghostBrick);
-    _stateController.add(_currentState);
-    _lockBrick();
-  }
+  /// Get high score
+  int get highScore => _engine.highScore;
 
-  void hold() {
-    if (!_currentState.canHold || _currentState.currentBrick == null) return;
+  /// Get level
+  int get level => _engine.level;
 
-    Brick? newHeldBrick;
-    Brick? newCurrentBrick;
+  /// Get lines cleared
+  int get linesCleared => _engine.linesCleared;
 
-    if (_currentState.heldBrick == null) {
-      newHeldBrick = _currentState.currentBrick!;
-      _spawnNewBrick();
-      newCurrentBrick = _currentState.currentBrick;
-    } else {
-      newHeldBrick = _currentState.currentBrick!;
-      newCurrentBrick = _engine.createBrick(_currentState.heldBrick!.type);
-    }
+  /// Get total lines cleared
+  int get totalLinesCleared => _engine.totalLinesCleared;
 
-    _currentState = _currentState.copyWith(
-      currentBrick: newCurrentBrick,
-      heldBrick: newHeldBrick,
-      canHold: false,
-    );
-    _stateController.add(_currentState);
-  }
+  /// Get combo
+  int get combo => _engine.combo;
 
-  void _move(Direction direction) {
-    if (_currentState.currentBrick == null) return;
+  /// Get elapsed time
+  Duration get elapsedTime => _engine.elapsedTime;
 
-    final movedBrick = _currentState.currentBrick!.move(direction);
-    if (!_engine.checkCollision(movedBrick, _currentState.grid)) {
-      _currentState = _currentState.copyWith(currentBrick: movedBrick);
-      _stateController.add(_currentState);
-    }
-  }
+  /// Get status
+  engine_types.GameStateStatus get status => _engine.status;
 
+  /// Get difficulty
+  engine_types.Difficulty get difficulty => _engine.difficulty;
+
+  /// Serialize for save
+  Map<String, dynamic> toJson() => _engine.toJson();
+
+  @override
   void dispose() {
     _isRunning = false;
     _timer?.cancel();
@@ -268,9 +208,8 @@ class GameLoop {
     _lineClearController.close();
     _scoreController.close();
     _gameOverController.close();
-  }
-  
-  List<Position> getGhostPosition(Brick brick, List<List<bool>> grid) {
-    return _engine.getGhostPosition(brick, grid);
+    _levelUpController.close();
+    _tSpinController.close();
+    super.dispose();
   }
 }

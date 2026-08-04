@@ -6,11 +6,11 @@ part of 'app_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$gameLoopHash() => r'9204b43de0c06cab6c6a068e20e7d98517b7314a';
+String _$gameLoopHash() => r'13b312d4c5178599893940f1ab95fbe9f99f86a9';
 
 /// See also [gameLoop].
 @ProviderFor(gameLoop)
-final gameLoopProvider = AutoDisposeProvider<GameLoop>.internal(
+final gameLoopProvider = AutoDisposeProvider<engine.GameLoop>.internal(
   gameLoop,
   name: r'gameLoopProvider',
   debugGetCreateSourceHash:
@@ -21,12 +21,12 @@ final gameLoopProvider = AutoDisposeProvider<GameLoop>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef GameLoopRef = AutoDisposeProviderRef<GameLoop>;
-String _$gameEngineHash() => r'982ad0977b5fef5802553ae7f1b96a3a6f97d33e';
+typedef GameLoopRef = AutoDisposeProviderRef<engine.GameLoop>;
+String _$gameEngineHash() => r'36f548f6e28159d8ac7b23239be71ce90be61813';
 
 /// See also [gameEngine].
 @ProviderFor(gameEngine)
-final gameEngineProvider = AutoDisposeProvider<GameEngine>.internal(
+final gameEngineProvider = AutoDisposeProvider<engine.GameEngine>.internal(
   gameEngine,
   name: r'gameEngineProvider',
   debugGetCreateSourceHash:
@@ -37,7 +37,7 @@ final gameEngineProvider = AutoDisposeProvider<GameEngine>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef GameEngineRef = AutoDisposeProviderRef<GameEngine>;
+typedef GameEngineRef = AutoDisposeProviderRef<engine.GameEngine>;
 String _$audioServiceHash() => r'b744f27739274a3510a5898a2794b09ac07c7ee6';
 
 /// See also [audioService].
@@ -71,11 +71,11 @@ final storageServiceProvider = AutoDisposeProvider<StorageService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef StorageServiceRef = AutoDisposeProviderRef<StorageService>;
-String _$settingsHash() => r'10e076be871e45568785e10052f79f198e1fe557';
+String _$settingsHash() => r'0146dbede2f2a5c01ce2d24e95729c6a60de2ad2';
 
 /// See also [settings].
 @ProviderFor(settings)
-final settingsProvider = AutoDisposeFutureProvider<Settings>.internal(
+final settingsProvider = AutoDisposeFutureProvider<models.Settings>.internal(
   settings,
   name: r'settingsProvider',
   debugGetCreateSourceHash:
@@ -86,12 +86,13 @@ final settingsProvider = AutoDisposeFutureProvider<Settings>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef SettingsRef = AutoDisposeFutureProviderRef<Settings>;
-String _$statisticsHash() => r'cdda25ab150e260849368558f0b5ce43878a616f';
+typedef SettingsRef = AutoDisposeFutureProviderRef<models.Settings>;
+String _$statisticsHash() => r'849c76ce7859ac2ae6434ad539a8a0de02369581';
 
 /// See also [statistics].
 @ProviderFor(statistics)
-final statisticsProvider = AutoDisposeFutureProvider<Statistics>.internal(
+final statisticsProvider =
+    AutoDisposeFutureProvider<models.Statistics>.internal(
   statistics,
   name: r'statisticsProvider',
   debugGetCreateSourceHash:
@@ -102,13 +103,13 @@ final statisticsProvider = AutoDisposeFutureProvider<Statistics>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef StatisticsRef = AutoDisposeFutureProviderRef<Statistics>;
-String _$gameStateNotifierHash() => r'45b3a455b035432f3bcb205cf2c1713d7c8a5e74';
+typedef StatisticsRef = AutoDisposeFutureProviderRef<models.Statistics>;
+String _$gameStateNotifierHash() => r'34d3706371ff28be65857a65d0ea374e9f0aae51';
 
 /// See also [GameStateNotifier].
 @ProviderFor(GameStateNotifier)
 final gameStateNotifierProvider =
-    AutoDisposeNotifierProvider<GameStateNotifier, GameState>.internal(
+    AutoDisposeNotifierProvider<GameStateNotifier, engine.GameState>.internal(
   GameStateNotifier.new,
   name: r'gameStateNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -118,13 +119,13 @@ final gameStateNotifierProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$GameStateNotifier = AutoDisposeNotifier<GameState>;
-String _$settingsNotifierHash() => r'11c432a8f6d7b2f07e132f0b83be3dffbf111e1a';
+typedef _$GameStateNotifier = AutoDisposeNotifier<engine.GameState>;
+String _$settingsNotifierHash() => r'cbf7a485a63c4d9a79b4144f24e908c53dc9fa0e';
 
 /// See also [SettingsNotifier].
 @ProviderFor(SettingsNotifier)
-final settingsNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<SettingsNotifier, Settings>.internal(
+final settingsNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    SettingsNotifier, models.Settings>.internal(
   SettingsNotifier.new,
   name: r'settingsNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -134,14 +135,14 @@ final settingsNotifierProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$SettingsNotifier = AutoDisposeAsyncNotifier<Settings>;
+typedef _$SettingsNotifier = AutoDisposeAsyncNotifier<models.Settings>;
 String _$statisticsNotifierHash() =>
-    r'35bea4fd2cf1d35f5e812dcb147a0fb8e361ed72';
+    r'b02b2b4fe20b9471cc09cd8b047e5772c8da1350';
 
 /// See also [StatisticsNotifier].
 @ProviderFor(StatisticsNotifier)
-final statisticsNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<StatisticsNotifier, Statistics>.internal(
+final statisticsNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    StatisticsNotifier, models.Statistics>.internal(
   StatisticsNotifier.new,
   name: r'statisticsNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -151,6 +152,6 @@ final statisticsNotifierProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$StatisticsNotifier = AutoDisposeAsyncNotifier<Statistics>;
+typedef _$StatisticsNotifier = AutoDisposeAsyncNotifier<models.Statistics>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

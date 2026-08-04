@@ -4,7 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/themes/app_theme.dart';
-import '../../models/models.dart';
+import '../../engine/engine.dart' as engine;
+import '../../models/models.dart' as models;
 import '../../providers/providers.dart';
 import '../../widgets/widgets.dart';
 import '../../storage/storage_service.dart';
@@ -38,7 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingsList(ThemeData theme, Settings settings) {
+  Widget _buildSettingsList(ThemeData theme, models.Settings settings) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(
@@ -81,7 +82,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAudioSettings(ThemeData theme, Settings settings) {
+  Widget _buildAudioSettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -155,7 +156,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildGameplaySettings(ThemeData theme, Settings settings) {
+  Widget _buildGameplaySettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -206,10 +207,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           leading: Icon(Icons.speed_rounded, color: theme.colorScheme.primary),
           title: 'Default Difficulty',
           subtitle: settings.defaultDifficulty.name.toUpperCase(),
-          trailing: PopupMenuButton<Difficulty>(
-            initialValue: settings.defaultDifficulty,
+          trailing: PopupMenuButton<engine.Difficulty>(
+            initialValue: engine.Difficulty.values.firstWhere((d) => d.name == settings.defaultDifficulty.name),
             onSelected: (difficulty) => ref.read(settingsNotifierProvider.notifier).setDifficulty(difficulty),
-            itemBuilder: (context) => Difficulty.values.map((d) => PopupMenuItem(
+            itemBuilder: (context) => engine.Difficulty.values.map((d) => PopupMenuItem(
               value: d,
               child: Text(d.name.toUpperCase()),
             )).toList(),
@@ -231,7 +232,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildVisualSettings(ThemeData theme, Settings settings) {
+  Widget _buildVisualSettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -264,7 +265,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildControlSettings(ThemeData theme, Settings settings) {
+  Widget _buildControlSettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -299,7 +300,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAppearanceSettings(ThemeData theme, Settings settings) {
+  Widget _buildAppearanceSettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -313,7 +314,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAdvancedSettings(ThemeData theme, Settings settings) {
+  Widget _buildAdvancedSettings(ThemeData theme, models.Settings settings) {
     return SettingsCard(
       children: [
         SettingsTile(
@@ -397,7 +398,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
           FilledButton(
             onPressed: () {
-              ref.read(settingsNotifierProvider.notifier).updateSettings(Settings.defaultSettings());
+              ref.read(settingsNotifierProvider.notifier).updateSettings(models.Settings.defaultSettings());
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Settings reset', style: TextStyle(color: Theme.of(context).colorScheme.onError))),
@@ -423,7 +424,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () async {
               final storage = ref.read(storageServiceProvider);
               await storage.clearGameState();
-              await ref.read(settingsNotifierProvider.notifier).updateSettings(Settings.defaultSettings());
+              await ref.read(settingsNotifierProvider.notifier).updateSettings(models.Settings.defaultSettings());
               await ref.read(statisticsNotifierProvider.notifier).reset();
               if (context.mounted) {
                 Navigator.pop(context);
